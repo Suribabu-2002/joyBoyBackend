@@ -5,7 +5,7 @@ import connectDB from "./dataBase/dataBaseConfig.js";
 import movieRoutes from "./routes/movieRoutes.js";
 import genreRoutes from "./routes/genresRoute.js";
 import watchListRoutes from "./routes/watchListRoute.js";
-import cors from 'cors'
+import cors from "cors";
 
 configDotenv();
 const app = express();
@@ -17,8 +17,9 @@ app.use(
       "https://joyboy-lyart.vercel.app",
       "http://localhost:5173",
     ],
-  })
-);connectDB();
+  }),
+);
+connectDB();
 
 // Home route
 app.get("/", (req, res) => {

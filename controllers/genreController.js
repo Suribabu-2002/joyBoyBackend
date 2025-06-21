@@ -8,9 +8,9 @@ export const getGenres = async (req, res) => {
       { $unwind: "$genres" },
       { $group: { _id: "$genres.name", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
-      { $limit: 5 }
+      { $limit: 5 },
     ]);
-    const genres = topGenres.map(g => ({ name: g._id, count: g.count }));
+    const genres = topGenres.map((g) => ({ name: g._id, count: g.count }));
 
     res.status(200).json({
       genres,

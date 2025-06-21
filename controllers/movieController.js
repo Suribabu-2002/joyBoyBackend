@@ -36,8 +36,8 @@ export const getMovies = async (req, res) => {
     const total_movies = await Movie.countDocuments(filter);
     const movies = await Movie.aggregate([
       { $match: filter },
-      { $sample: { size: limit } }
-    ]).sort({rating:-1 , _id:1});
+      { $sample: { size: limit } },
+    ]).sort({ rating: -1, _id: 1 });
 
     res.status(200).json({
       total_movies,
@@ -67,6 +67,9 @@ export const getMovie = async (req, res) => {
     console.error("Error fetching Movie:", error);
     res
       .status(500)
-      .json({ message: "Error Getting the specified movie", error: error.message });
+      .json({
+        message: "Error Getting the specified movie",
+        error: error.message,
+      });
   }
 };
