@@ -34,7 +34,10 @@ export const getMovies = async (req, res) => {
     const { page, limit, skip } = getPagination(req);
 
     const total_movies = await Movie.countDocuments(filter);
-    const movies = await Movie.find(filter).skip(skip).limit(limit).lean();
+    const movies = await Movie.aggregate([
+      { $match: filter },
+      { $sample: { size: limit } }
+    ]).sort({rating:-1 , _id:1});
 
     res.status(200).json({
       total_movies,
