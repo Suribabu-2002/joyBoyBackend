@@ -37,7 +37,7 @@ export const getMovies = async (req, res) => {
     const movies = await Movie.aggregate([
       { $match: filter },
       { $sample: { size: limit } },
-    ]).sort({ rating: -1, _id: 1 });
+    ]).sort({ rating: -1, _id: 1 }).skip(skip).lean();
 
     res.status(200).json({
       total_movies,
