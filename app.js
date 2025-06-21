@@ -5,10 +5,12 @@ import connectDB from "./dataBase/dataBaseConfig.js";
 import movieRoutes from "./routes/movieRoutes.js";
 import genreRoutes from "./routes/genresRoute.js";
 import watchListRoutes from "./routes/watchListRoute.js";
+import cors from 'cors'
 
 configDotenv();
 const app = express();
 app.use(express.json());
+app.use(cors({origin:'http:localhost:3000 , https:joyboy-lyart.vercel.app'}))
 connectDB();
 
 // Home route
