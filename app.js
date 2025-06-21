@@ -10,7 +10,7 @@ import cors from 'cors'
 configDotenv();
 const app = express();
 app.use(express.json());
-app.use(cors({origin:'http:localhost:3000 , https:joyboy-lyart.vercel.app'}))
+app.use(cors({origin:'http://localhost:3000 , https://joyboy-lyart.vercel.app http://localhost:5173'}))
 connectDB();
 
 // Home route
