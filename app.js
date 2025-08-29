@@ -19,7 +19,7 @@ app.use(
     ],
   }),
 );
-connectDB();
+export const db = await connectDB("mongoDB");
 
 // Home route
 app.get("/", (req, res) => {

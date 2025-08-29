@@ -65,11 +65,9 @@ export const getMovie = async (req, res) => {
     res.status(200).json({ isWatchListed, movie });
   } catch (error) {
     console.error("Error fetching Movie:", error);
-    res
-      .status(500)
-      .json({
-        message: "Error Getting the specified movie",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Error Getting the specified movie",
+      error: error.message,
+    });
   }
 };
