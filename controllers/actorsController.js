@@ -8,17 +8,21 @@ const getActors = async (req, res) => {
     let filter = "";
     let params = [];
 
-    if (req.query.name) {
+    if (req.query.title) {
       filter = "WHERE f.title LIKE ?";
       params.push(`%${req.query.title}%`);
     }
-
     const countQuery = `SELECT COUNT(DISTINCT f.film_id) AS total
 FROM film f
 JOIN film_actor fa ON f.film_id = fa.film_id
 JOIN actor a ON fa.actor_id = a.actor_id ${filter}`;
     const [countRows] = await db.promise().query(countQuery, params);
     const total_actors = countRows[0].total;
+
+    if (skip >= total_actors)
+      throw new Error(
+        `There are only ${total_actors} entries, But offset is ${skip}: Reduce the offset value.`
+      );
 
     const query = `
     SELECT f.film_id, f.title, f.description, f.rating,
