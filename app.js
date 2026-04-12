@@ -4,7 +4,9 @@ import { home } from "./constants/constants.js";
 import connectDB from "./dataBase/dataBaseConfig.js";
 import movieRoutes from "./routes/movieRoutes.js";
 import genreRoutes from "./routes/genresRoute.js";
+import schedulerRoute from "./routes/schedulerRoute.js";
 import watchListRoutes from "./routes/watchListRoute.js";
+import { startMovieSyncCron } from "./scheduler.js";
 import cors from "cors";
 
 configDotenv();
@@ -30,6 +32,10 @@ app.get("/", (req, res) => {
 app.use("/", genreRoutes); // This will handle /genres
 app.use("/", movieRoutes); // This will handle /movies
 app.use("/", watchListRoutes);
+app.use("/", schedulerRoute);
 
 const port = process.env.PORT_NO || 8080;
-app.listen(port, () => console.log(`your port is running on ${port} `));
+app.listen(port, () => {
+  console.log(`your port is running on ${port} `);
+  startMovieSyncCron();
+});
