@@ -1,27 +1,33 @@
 import { configDotenv } from "dotenv";
-import cron from "node-cron";
 import mongoose from "mongoose";
 import connectDB from "./dataBase/dataBaseConfig.js";
 import { runMovieSyncJob } from "./services/movieSyncService.js";
+import {
+  getJobLastRun,
+  updateJobLastRun,
+  shouldRunJob,
+  closeDb,
+} from "./utils/jobTracker.js";
 
 configDotenv();
 
-const FIFTEEN_DAY_CRON = "0 0 */15 * *";
-
-const shouldStartCron = () => {
-  const enabled = process.env.ENABLE_MOVIE_SYNC_CRON === "true";
-  const runningOnVercel = Boolean(process.env.VERCEL);
-
-  return enabled && !runningOnVercel;
-};
+const JOB_NAME = "movies-sync";
+const WINDOW_7_DAYS_MS = 1 * 1 * 5 * 60 * 1000;
 
 const executeMovieSync = async () => {
   try {
     await connectDB();
     const result = await runMovieSyncJob();
-    console.log("Scheduled movie sync result:", result);
+    console.log("Movie sync result:", result);
+
+    // Update last run time on success
+    await updateJobLastRun(JOB_NAME);
+    console.log("Updated job last run timestamp.");
+
+    return result;
   } catch (error) {
-    console.error("Scheduled movie sync failed:", error);
+    console.error("Movie sync failed:", error);
+    throw error;
   } finally {
     if (mongoose.connection.readyState !== 0) {
       await mongoose.connection.close();
@@ -29,28 +35,34 @@ const executeMovieSync = async () => {
   }
 };
 
-export const startMovieSyncCron = () => {
-  if (!shouldStartCron()) {
+export const startMovieSyncCron = async () => {
+  const runningOnVercel = Boolean(process.env.VERCEL);
+
+  if (runningOnVercel) {
+    console.log("Running on Vercel - checking if job should run based on 7-day window.");
+  } else {
     console.log(
-      "Movie sync cron is disabled. Set ENABLE_MOVIE_SYNC_CRON=true on a persistent server to enable it.",
+      "Running on persistent server - job runs via cron or manual invocation.",
     );
+  }
+
+  const shouldRun = await shouldRunJob(JOB_NAME, WINDOW_7_DAYS_MS);
+
+  if (!shouldRun) {
+    const lastRun = await getJobLastRun(JOB_NAME);
+    console.log(`Job already ran recently. Last run: ${lastRun?.toISOString()}`);
+    await closeDb();
     return null;
   }
 
-  const task = cron.schedule(FIFTEEN_DAY_CRON, async () => {
-    console.log("Starting scheduled movie sync job.");
-    await executeMovieSync();
-  });
-
-  console.log(
-    `Movie sync cron started with schedule "${FIFTEEN_DAY_CRON}" in server local time.`,
-  );
-
-  return task;
+  console.log("Running movie sync job...");
+  const result = await executeMovieSync();
+  await closeDb();
+  return result;
 };
 
 const isDirectExecution = process.argv[1]?.endsWith("scheduler.js");
 
 if (isDirectExecution) {
-  await executeMovieSync();
+  await startMovieSyncCron();
 }

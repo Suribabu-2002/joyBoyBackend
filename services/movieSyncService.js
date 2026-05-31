@@ -7,7 +7,7 @@ import Movie from "../models/movieModel.js";
 configDotenv();
 
 const PAGE_SIZE = 20;
-const MAX_API_CALLS = 10;
+const MAX_API_CALLS = 5;
 const LOCK_FILE_PATH = path.resolve(".scheduler", "movies-sync.lock");
 const JOB_NAME = "movies-sync";
 const STREAMING_AVAILABILITY_URL =
@@ -88,21 +88,25 @@ const releaseLock = async () => {
 };
 
 const fetchShowsPage = async (cursor) => {
-  const response = await fetch(buildRequestUrl(cursor), {
-    headers: {
-      "x-rapidapi-key": process.env.RAPIDAPI_KEY,
-      "x-rapidapi-host": "streaming-availability.p.rapidapi.com",
-    },
-  });
+try {
+    const response = await fetch(buildRequestUrl(cursor), {
+      headers: {
+        "x-rapidapi-key": process.env.RAPIDAPI_KEY,
+        "x-rapidapi-host": "streaming-availability.p.rapidapi.com",
+      },
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Streaming Availability request failed with ${response.status}: ${errorText}`,
-    );
-  }
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Streaming Availability request failed with ${response.status}: ${errorText}`,
+      );
+    }
 
-  return response.json();
+    return response.json();
+} catch (error) {
+  console.log(error?.message)
+}
 };
 
 const normalizeImageSet = (imageSet = {}) => ({

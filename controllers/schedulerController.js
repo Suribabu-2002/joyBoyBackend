@@ -4,8 +4,17 @@ import {
   closeMovieSyncResources,
   runMovieSyncJob,
 } from "../services/movieSyncService.js";
+import {
+  shouldRunJob,
+  updateJobLastRun,
+  getJobLastRun,
+  closeDb,
+} from "../utils/jobTracker.js";
 
 configDotenv();
+
+const JOB_NAME = "movies-sync";
+const WINDOW_7_DAYS_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 
 const isAuthorized = (req) => {
   const configuredSecret = process.env.CRON_SECRET?.trim();
@@ -25,9 +34,25 @@ export const syncMovies = async (req, res) => {
     return res.status(401).json({ message: "Unauthorized cron request." });
   }
 
+  // Check if job should run based on 7-day window
+  const shouldRun = await shouldRunJob(JOB_NAME, WINDOW_7_DAYS_MS);
+
+  if (!shouldRun) {
+    const lastRun = await getJobLastRun(JOB_NAME);
+    await closeDb();
+    console.log(`Job already ran recently. Last run: ${lastRun?.toISOString()}`);
+    return res.status(200).json({
+      success: false,
+      message: "Job already ran within the 7-day window.",
+    });
+  }
+
   try {
     await connectDB();
     const result = await runMovieSyncJob();
+
+    // Update last run time on success
+    await updateJobLastRun(JOB_NAME);
 
     return res.status(200).json(result);
   } catch (error) {
@@ -40,5 +65,6 @@ export const syncMovies = async (req, res) => {
     });
   } finally {
     await closeMovieSyncResources();
+    await closeDb();
   }
 };

@@ -1,9 +1,16 @@
 {
   "version": 2,
   "builds": [
-    { "src": "app.js", "use": "@vercel/node" }
+    { "src": "app.js", "use": "@vercel/node" },
+    { "src": "scheduler.js", "use": "@vercel/node" }
   ],
   "routes": [
     { "src": "/(.*)", "dest": "app.js" }
+  ],
+  "crons": [
+    {
+      "path": "/internal/sync-movies",
+      "schedule": "30 10 * * *"
+    }
   ]
 }
